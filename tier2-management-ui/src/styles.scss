@@ -1,0 +1,139 @@
+/* Global Styles for Hebrew RTL Support */
+
+/* Hebrew Font */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@300;400;500;700&display=swap');
+
+/* RTL Global Styles */
+html, body {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Noto Sans Hebrew', sans-serif;
+  height: 100%;
+  margin: 0;
+}
+
+/* Material Design RTL Overrides */
+.mat-form-field {
+  text-align: right;
+}
+
+.mat-input-element {
+  text-align: right;
+}
+
+.mat-select {
+  text-align: right;
+}
+
+.mat-option {
+  text-align: right;
+}
+
+/* Table RTL Support */
+.mat-table {
+  direction: rtl;
+}
+
+.mat-header-cell, .mat-cell {
+  text-align: right;
+}
+
+/* Card RTL Support */
+.mat-card {
+  text-align: right;
+}
+
+/* Dialog RTL Support */
+.mat-dialog-container {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Snackbar RTL Support */
+.mat-snack-bar-container {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Custom Hebrew Styles */
+.hebrew-text {
+  font-family: 'Noto Sans Hebrew', sans-serif;
+  direction: rtl;
+  text-align: right;
+}
+
+.english-text {
+  font-family: 'Roboto', sans-serif;
+  direction: ltr;
+  text-align: left;
+}
+
+/* Status Colors */
+.status-success {
+  color: #4caf50;
+}
+
+.status-warning {
+  color: #ff9800;
+}
+
+.status-error {
+  color: #f44336;
+}
+
+.status-info {
+  color: #2196f3;
+}
+
+/* Utility Classes */
+.text-center {
+  text-align: center !important;
+}
+
+.text-left {
+  text-align: left !important;
+}
+
+.text-right {
+  text-align: right !important;
+}
+
+.margin-top {
+  margin-top: 16px;
+}
+
+.margin-bottom {
+  margin-bottom: 16px;
+}
+
+.padding {
+  padding: 16px;
+}
+
+/* Loading Spinner */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+/* Error Message */
+.error-message {
+  color: #f44336;
+  text-align: center;
+  padding: 16px;
+  background-color: #ffebee;
+  border-radius: 4px;
+  margin: 16px 0;
+}
+
+/* Success Message */
+.success-message {
+  color: #4caf50;
+  text-align: center;
+  padding: 16px;
+  background-color: #e8f5e8;
+  border-radius: 4px;
+  margin: 16px 0;
+} 
