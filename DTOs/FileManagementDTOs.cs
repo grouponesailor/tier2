@@ -209,4 +209,98 @@ public class BulkRecoveryDto
     public List<RecoverItemDto> Items { get; set; } = new();
     public string Justification { get; set; } = string.Empty;
     public bool ContinueOnError { get; set; } = true;
+}
+
+// New DTOs for getStorageId endpoint
+public class GetStorageIdResponse
+{
+    public GetStorageIdResponseBody ResponseBody { get; set; } = new();
+    public ResponseHeader ResponseHeader { get; set; } = new();
+    public string? Ex { get; set; }
+}
+
+public class GetStorageIdResponseBody
+{
+    public string ItemId { get; set; } = string.Empty;
+    public string StorageId { get; set; } = string.Empty;
+    public int StorageType { get; set; }
+}
+
+// New DTOs for restore endpoints
+public class RestoreRequest
+{
+    public RequestHeader RequestHeader { get; set; } = new();
+    public RestoreRequestBody RequestBody { get; set; } = new();
+}
+
+public class RestoreRequestBody
+{
+    public string Id { get; set; } = string.Empty;
+    public bool Override { get; set; }
+    public string? NewParentId { get; set; }
+}
+
+public class RestoreResponse
+{
+    public string Id { get; set; } = string.Empty;
+    public ResponseHeader ResponseHeader { get; set; } = new();
+    public string? Ex { get; set; }
+}
+
+// New DTOs for files search endpoint
+public class FilesSearchRequest
+{
+    public string Q { get; set; } = string.Empty;
+    public object? Filters { get; set; }
+    public List<SortField> Sort { get; set; } = new();
+    public string System { get; set; } = string.Empty;
+    public string Uuid { get; set; } = string.Empty;
+}
+
+public class SortField
+{
+    public string Field { get; set; } = string.Empty;
+    public string Order { get; set; } = string.Empty;
+}
+
+public class FilesSearchResponse
+{
+    public PagingInfo Paging { get; set; } = new();
+    public List<FileHit> Hits { get; set; } = new();
+}
+
+public class PagingInfo
+{
+    public string PitId { get; set; } = string.Empty;
+    public List<long> Sort { get; set; } = new();
+}
+
+public class FileHit
+{
+    public FileMetadata Metadata { get; set; } = new();
+}
+
+public class FileMetadata
+{
+    public string AuthorizationLevel { get; set; } = string.Empty;
+    public string Extension { get; set; } = string.Empty;
+    public DateTime UpdateDate { get; set; }
+    public string UpdateId { get; set; } = string.Empty;
+    public string FullNamePath { get; set; } = string.Empty;
+    public string AcExternalId { get; set; } = string.Empty;
+    public int AcInheriteType { get; set; }
+    public string OwnerId { get; set; } = string.Empty;
+    public int Type { get; set; }
+    public string FullPath { get; set; } = string.Empty;
+    public DateTime LastOperationDate { get; set; }
+    public string ParentId { get; set; } = string.Empty;
+    public string LastOperationByUser { get; set; } = string.Empty;
+    public string ParentName { get; set; } = string.Empty;
+    public long Size { get; set; }
+    public string LastOperation { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public List<object> Attributes { get; set; } = new();
+    public string Id { get; set; } = string.Empty;
+    public int Status { get; set; }
+    public DateTime CreateDate { get; set; }
 } 

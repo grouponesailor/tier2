@@ -194,6 +194,183 @@ public class FilesController : ControllerBase
 }
 
 /// <summary>
+/// בקר חיפוש קבצים (Files search controller)
+/// </summary>
+[ApiController]
+[Route("files")]
+public class FilesSearchController : ControllerBase
+{
+    private readonly IFileManagementService _fileManagementService;
+    private readonly ILogger<FilesSearchController> _logger;
+
+    public FilesSearchController(IFileManagementService fileManagementService, ILogger<FilesSearchController> logger)
+    {
+        _fileManagementService = fileManagementService;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// חיפוש קבצים (Search files)
+    /// </summary>
+    [HttpPost]
+    public async Task<ActionResult<FilesSearchResponse>> SearchFiles([FromBody] FilesSearchRequest request, [FromQuery] string? classification = null)
+    {
+        try
+        {
+            _logger.LogInformation("Files search request received. Query: {Query}, System: {System}, UUID: {Uuid}, Classification: {Classification}", 
+                request.Q, request.System, request.Uuid, classification);
+
+            // Mock implementation - in real scenario, this would search the file system
+            var response = new FilesSearchResponse
+            {
+                Paging = new PagingInfo
+                {
+                    PitId = "aaa=efgrwhfrwf",
+                    Sort = new List<long> { 2658136474, 478034234238 }
+                },
+                Hits = new List<FileHit>
+                {
+                    new FileHit
+                    {
+                        Metadata = new FileMetadata
+                        {
+                            AuthorizationLevel = "FULLY_ATHORIZED",
+                            Extension = "pptx",
+                            UpdateDate = DateTime.Parse("2025-06-03T12:12:13"),
+                            UpdateId = "",
+                            FullNamePath = "/app/im/aaa/bbb/ccc.pptx",
+                            AcExternalId = "",
+                            AcInheriteType = 0,
+                            OwnerId = "0111111",
+                            Type = 1,
+                            FullPath = "/app/im/aaa/bbb/ccc.pptx",
+                            LastOperationDate = DateTime.Parse("2025-06-03T12:12:13.770816"),
+                            ParentId = "222",
+                            LastOperationByUser = "0222222",
+                            ParentName = "Shoki Hahamod",
+                            Size = 277882,
+                            LastOperation = "file_saved",
+                            Name = "fwqded",
+                            Attributes = new List<object>(),
+                            Id = "111",
+                            Status = 1,
+                            CreateDate = DateTime.Parse("2025-06-03T12:12:13")
+                        }
+                    }
+                }
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching files");
+            return StatusCode(500, new { message = "שגיאה בחיפוש קבצים" });
+        }
+    }
+}
+
+/// <summary>
+/// בקר שחזור קבצים (File restore controller)
+/// </summary>
+[ApiController]
+[Route("api/file")]
+public class FileRestoreController : ControllerBase
+{
+    private readonly IFileManagementService _fileManagementService;
+    private readonly ILogger<FileRestoreController> _logger;
+
+    public FileRestoreController(IFileManagementService fileManagementService, ILogger<FileRestoreController> logger)
+    {
+        _fileManagementService = fileManagementService;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// שחזור קובץ (Restore file)
+    /// </summary>
+    [HttpPut("restore")]
+    public async Task<ActionResult<RestoreResponse>> RestoreFile([FromBody] RestoreRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("File restore request received for ID: {Id}, Request ID: {ReqId}", 
+                request.RequestBody.Id, request.RequestHeader.ReqId);
+
+            // Mock implementation - in real scenario, this would restore the file
+            var response = new RestoreResponse
+            {
+                Id = request.RequestBody.Id,
+                ResponseHeader = new ResponseHeader { ReqId = request.RequestHeader.ReqId },
+                Ex = null
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restoring file");
+            return Ok(new RestoreResponse
+            {
+                Id = request.RequestBody?.Id ?? string.Empty,
+                ResponseHeader = new ResponseHeader { ReqId = request.RequestHeader?.ReqId ?? string.Empty },
+                Ex = ex.Message
+            });
+        }
+    }
+}
+
+/// <summary>
+/// בקר שחזור תיקיות (Directory restore controller)
+/// </summary>
+[ApiController]
+[Route("api/directory")]
+public class DirectoryRestoreController : ControllerBase
+{
+    private readonly IFileManagementService _fileManagementService;
+    private readonly ILogger<DirectoryRestoreController> _logger;
+
+    public DirectoryRestoreController(IFileManagementService fileManagementService, ILogger<DirectoryRestoreController> logger)
+    {
+        _fileManagementService = fileManagementService;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// שחזור תיקייה (Restore directory)
+    /// </summary>
+    [HttpPut("restore")]
+    public async Task<ActionResult<RestoreResponse>> RestoreDirectory([FromBody] RestoreRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Directory restore request received for ID: {Id}, Request ID: {ReqId}", 
+                request.RequestBody.Id, request.RequestHeader.ReqId);
+
+            // Mock implementation - in real scenario, this would restore the directory
+            var response = new RestoreResponse
+            {
+                Id = request.RequestBody.Id,
+                ResponseHeader = new ResponseHeader { ReqId = request.RequestHeader.ReqId },
+                Ex = null
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restoring directory");
+            return Ok(new RestoreResponse
+            {
+                Id = request.RequestBody?.Id ?? string.Empty,
+                ResponseHeader = new ResponseHeader { ReqId = request.RequestHeader?.ReqId ?? string.Empty },
+                Ex = ex.Message
+            });
+        }
+    }
+}
+
+/// <summary>
 /// פריטים מחוקים (Deleted items controller)
 /// </summary>
 [ApiController]
@@ -227,33 +404,5 @@ public class DeletedItemsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// שחזור פריט מחוק (Restore deleted item)
-    /// </summary>
-    [HttpPost("{itemId}/restore")]
-    public async Task<ActionResult> RestoreDeletedItem(Guid itemId, [FromBody] RecoverItemDto request)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(request.Justification))
-                return BadRequest(new { message = "נדרש הסבר לשחזור הפריט" });
 
-            var success = await _fileManagementService.RestoreDeletedItemAsync(itemId, "admin");
-            
-            if (!success)
-                return NotFound(new { message = "פריט לא נמצא או לא יכול להישחזר" });
-
-            return Ok(new { 
-                success = true, 
-                message = "הפריט שוחזר בהצלחה",
-                itemId = itemId,
-                timestamp = DateTime.UtcNow
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error restoring deleted item");
-            return StatusCode(500, new { message = "שגיאה בשחזור הפריט" });
-        }
-    }
 } 

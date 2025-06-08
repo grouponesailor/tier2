@@ -222,6 +222,39 @@ public class FilesController : ControllerBase
             })
         });
     }
+
+    /// <summary>
+    /// Restore a file
+    /// </summary>
+    [HttpPut("restore")]
+    public ActionResult<FileRestoreResponse> RestoreFile([FromBody] FileRestoreRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Mock file restore request received for ID: {Id}, Request ID: {ReqId}", 
+                request.RequestBody.Id, request.RequestHeader.ReqId);
+
+            // Mock file restore operation
+            var response = new FileRestoreResponse
+            {
+                Id = request.RequestBody.Id,
+                ResponseHeader = new ResponseHeader { ReqId = request.RequestHeader.ReqId },
+                Ex = null
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restoring file in mock server");
+            return Ok(new FileRestoreResponse
+            {
+                Id = request.RequestBody?.Id ?? string.Empty,
+                ResponseHeader = new ResponseHeader { ReqId = request.RequestHeader?.ReqId ?? string.Empty },
+                Ex = ex.Message
+            });
+        }
+    }
 }
 
 // Legacy format
@@ -269,4 +302,25 @@ public class RestoreVersionRequest
     public int VersionNumber { get; set; }
     public string AdminUser { get; set; } = string.Empty;
     public string? Comments { get; set; }
+}
+
+// File restore DTOs
+public class FileRestoreRequestBody
+{
+    public string Id { get; set; } = string.Empty;
+    public bool Override { get; set; }
+    public string? NewParentId { get; set; }
+}
+
+public class FileRestoreRequest
+{
+    public RequestHeader RequestHeader { get; set; } = new();
+    public FileRestoreRequestBody RequestBody { get; set; } = new();
+}
+
+public class FileRestoreResponse
+{
+    public string Id { get; set; } = string.Empty;
+    public ResponseHeader ResponseHeader { get; set; } = new();
+    public string? Ex { get; set; }
 } 

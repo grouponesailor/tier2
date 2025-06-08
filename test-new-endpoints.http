@@ -1,0 +1,39 @@
+### Test new Mock Server endpoints
+
+### 1. Test getStorageId endpoint
+GET http://localhost:5002/api/maintenance/getStorageId/id/111
+
+### 2. Test file restore endpoint  
+PUT http://localhost:5002/api/file/restore
+Content-Type: application/json
+
+{
+  "requestHeader": {
+    "reqId": "111",
+    "callingSystemId": "222"
+  },
+  "requestBody": {
+    "id": "111",
+    "override": false,
+    "newParentId": null
+  }
+}
+
+### 3. Test directory restore endpoint
+PUT http://localhost:5002/api/directory/restore
+Content-Type: application/json
+
+{
+  "requestHeader": {
+    "reqId": "111", 
+    "callingSystemId": "222"
+  },
+  "requestBody": {
+    "id": "111",
+    "override": false,
+    "newParentId": null
+  }
+}
+
+### 4. Test health endpoint
+GET http://localhost:5002/health 

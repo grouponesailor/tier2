@@ -1,0 +1,76 @@
+### Test new Main API endpoints
+### Base URL for Main API
+@baseUrl = http://localhost:5000
+
+###
+# Test GetStorageId endpoint
+GET {{baseUrl}}/api/maintenance/getStorageId/id/111
+Accept: application/json
+
+###
+# Test File Restore endpoint
+PUT {{baseUrl}}/api/file/restore
+Content-Type: application/json
+
+{
+  "requestHeader": {
+    "reqId": "111",
+    "callingSystemId": 222
+  },
+  "requestBody": {
+    "id": "111",
+    "override": false,
+    "newParentId": null
+  }
+}
+
+###
+# Test Directory Restore endpoint
+PUT {{baseUrl}}/api/directory/restore
+Content-Type: application/json
+
+{
+  "requestHeader": {
+    "reqId": "111",
+    "callingSystemId": 222
+  },
+  "requestBody": {
+    "id": "111",
+    "override": false,
+    "newParentId": null
+  }
+}
+
+###
+# Test with different parameters - File Restore with override
+PUT {{baseUrl}}/api/file/restore
+Content-Type: application/json
+
+{
+  "requestHeader": {
+    "reqId": "222",
+    "callingSystemId": 333
+  },
+  "requestBody": {
+    "id": "test-file-123",
+    "override": true,
+    "newParentId": "parent-folder-456"
+  }
+}
+
+###
+# Test with different parameters - Directory Restore with new parent
+PUT {{baseUrl}}/api/directory/restore
+Content-Type: application/json
+
+{
+  "requestHeader": {
+    "reqId": "333",
+    "callingSystemId": 444
+  },
+  "requestBody": {
+    "id": "test-dir-789",
+    "override": false,
+    "newParentId": "new-parent-123"
+  }
+} 

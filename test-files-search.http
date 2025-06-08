@@ -1,0 +1,77 @@
+### Test Files Search Endpoints
+### Main API
+@mainApiUrl = http://localhost:5000
+### MockServer
+@mockServerUrl = http://localhost:5002
+
+###
+# Test Files Search - Main API
+POST {{mainApiUrl}}/files?classification=hide_classified
+Content-Type: application/json
+
+{
+  "q": "shoki",
+  "filters": null,
+  "sort": [
+    {
+      "field": "updateDate",
+      "order": "desc"
+    }
+  ],
+  "system": "111",
+  "uuid": "222"
+}
+
+###
+# Test Files Search - MockServer
+POST {{mockServerUrl}}/files?classification=hide_classified
+Content-Type: application/json
+
+{
+  "q": "shoki",
+  "filters": null,
+  "sort": [
+    {
+      "field": "updateDate",
+      "order": "desc"
+    }
+  ],
+  "system": "111",
+  "uuid": "222"
+}
+
+###
+# Test Files Search without classification parameter - Main API
+POST {{mainApiUrl}}/files
+Content-Type: application/json
+
+{
+  "q": "document",
+  "filters": null,
+  "sort": [
+    {
+      "field": "name",
+      "order": "asc"
+    }
+  ],
+  "system": "333",
+  "uuid": "444"
+}
+
+###
+# Test Files Search without classification parameter - MockServer
+POST {{mockServerUrl}}/files
+Content-Type: application/json
+
+{
+  "q": "document",
+  "filters": null,
+  "sort": [
+    {
+      "field": "name",
+      "order": "asc"
+    }
+  ],
+  "system": "333",
+  "uuid": "444"
+} 
