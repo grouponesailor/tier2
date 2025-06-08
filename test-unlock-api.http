@@ -1,0 +1,63 @@
+### Test updated unlock API format - /api/files/unlock
+
+# Test with main API
+POST http://localhost:5000/api/files/unlock
+Content-Type: application/json
+
+{
+  "requestHeader": {
+    "reqId": "111",
+    "callingSystemId": 111
+  },
+  "requestBody": {
+    "id": "550e8400-e29b-41d4-a716-446655440000"
+  }
+}
+
+###
+
+# Test with Mock Server
+POST http://localhost:5002/api/files/unlock
+Content-Type: application/json
+
+{
+  "requestHeader": {
+    "reqId": "111", 
+    "callingSystemId": 111
+  },
+  "requestBody": {
+    "id": "550e8400-e29b-41d4-a716-446655440000"
+  }
+}
+
+###
+
+# Test with different file ID
+POST http://localhost:5002/api/files/unlock
+Content-Type: application/json
+
+{
+  "requestHeader": {
+    "reqId": "test-123",
+    "callingSystemId": 100
+  },
+  "requestBody": {
+    "id": "123e4567-e89b-12d3-a456-426614174000"
+  }
+}
+
+###
+
+# Test with invalid file ID format
+POST http://localhost:5002/api/files/unlock
+Content-Type: application/json
+
+{
+  "requestHeader": {
+    "reqId": "invalid-test",
+    "callingSystemId": 300
+  },
+  "requestBody": {
+    "id": "not-a-valid-guid"
+  }
+} 

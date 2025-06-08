@@ -38,22 +38,54 @@ public class FilesController : ControllerBase
     /// <summary>
     /// שחרור נעילת קובץ (Unlock file)
     /// </summary>
-    [HttpPost("{fileId}/unlock")]
-    public async Task<ActionResult> UnlockFile(Guid fileId, [FromBody] ForceUnlockFileDto request)
+    [HttpPost("unlock")]
+    public async Task<ActionResult<UnlockFileResponse>> UnlockFile([FromBody] UnlockFileRequest request)
     {
         try
         {
-            var success = await _fileManagementService.UnlockFileAsync(fileId, "admin", request.Justification);
-            
-            if (!success)
-                return NotFound(new { message = "File not found or not locked" });
+            _logger.LogInformation("Unlock request received for file ID: {FileId}, Request ID: {ReqId}", 
+                request.RequestBody.Id, request.RequestHeader.ReqId);
 
-            return Ok(new { success = true, message = "File unlocked successfully" });
+            // Try to parse file ID from request body
+            if (!Guid.TryParse(request.RequestBody.Id, out var fileId))
+            {
+                return Ok(new UnlockFileResponse
+                {
+                    Id = request.RequestBody.Id,
+                    Locked = true,
+                    Signature = string.Empty,
+                    Etag = string.Empty,
+                    ResponseHeader = new ResponseHeader { ReqId = request.RequestHeader.ReqId },
+                    Ex = "Invalid file ID format"
+                });
+            }
+
+            var success = await _fileManagementService.UnlockFileAsync(fileId, "admin", "API unlock request");
+            
+            var response = new UnlockFileResponse
+            {
+                Id = request.RequestBody.Id,
+                Locked = !success,
+                Signature = success ? Guid.NewGuid().ToString("N") : string.Empty,
+                Etag = success ? Guid.NewGuid().ToString("N") : string.Empty,
+                ResponseHeader = new ResponseHeader { ReqId = request.RequestHeader.ReqId },
+                Ex = success ? null : "File not found or not locked"
+            };
+
+            return Ok(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error unlocking file");
-            return StatusCode(500, new { message = "Error unlocking file" });
+            return Ok(new UnlockFileResponse
+            {
+                Id = request.RequestBody?.Id ?? string.Empty,
+                Locked = true,
+                Signature = string.Empty,
+                Etag = string.Empty,
+                ResponseHeader = new ResponseHeader { ReqId = request.RequestHeader?.ReqId ?? string.Empty },
+                Ex = ex.Message
+            });
         }
     }
 

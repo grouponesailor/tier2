@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת ניהול Tier 2 - לוח בקרה</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans Hebrew', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .api-status {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-right: 4px solid #4CAF50;
+        }
+
+        .api-status h2 {
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+
+        .api-status .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #4CAF50;
+        }
+
+        .status-text {
+            color: #4CAF50;
+            font-weight: 500;
+        }
+
+        .api-info {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-right: 4px solid #2196F3;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #2196F3;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .system-status {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .system-status h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-right: 3px solid #4CAF50;
+        }
+
+        .status-item.warning {
+            border-right-color: #FF9800;
+        }
+
+        .status-item.error {
+            border-right-color: #F44336;
+        }
+
+        .status-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-left: 12px;
+            background-color: #4CAF50;
+        }
+
+        .status-icon.warning {
+            background-color: #FF9800;
+        }
+
+        .status-icon.error {
+            background-color: #F44336;
+        }
+
+        .quick-actions {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .quick-actions h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .action-button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 16px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .action-button:hover {
+            background: #1976D2;
+            transform: translateY(-1px);
+        }
+
+        .action-button.secondary {
+            background: #6c757d;
+        }
+
+        .action-button.secondary:hover {
+            background: #5a6268;
+        }
+
+        .test-api {
+            margin-top: 16px;
+            padding: 12px;
+            background: #e3f2fd;
+            border-radius: 4px;
+            border-right: 3px solid #2196F3;
+        }
+
+        .test-result {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>מערכת ניהול Tier 2</h1>
+        <p>כלים אדמיניסטרטיביים לפלטפורמת ניהול קבצים ארגונית</p>
+    </div>
+
+    <div class="container">
+        <!-- API Status -->
+        <div class="api-status">
+            <h2>סטטוס חיבור API</h2>
+            <div class="status">
+                <div class="status-indicator" id="apiIndicator"></div>
+                <span class="status-text" id="apiStatus">בודק חיבור...</span>
+            </div>
+            <div class="api-info">
+                <strong>API Endpoint:</strong> http://localhost:5000<br>
+                <strong>Health Check:</strong> /health<br>
+                <strong>Last Check:</strong> <span id="lastCheck">-</span>
+            </div>
+            <div class="test-api">
+                <button onclick="testApiConnection()" class="action-button" style="padding: 8px 16px; font-size: 12px;">
+                    בדוק חיבור API
+                </button>
+                <div id="testResult" class="test-result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>סה"כ קבצים במערכת</h3>
+                <div class="stat-value">15,420</div>
+                <div class="stat-label">קבצים פעילים</div>
+            </div>
+            <div class="stat-card">
+                <h3>קבצים נעולים</h3>
+                <div class="stat-value">23</div>
+                <div class="stat-label">דורשים שחרור</div>
+            </div>
+            <div class="stat-card">
+                <h3>פריטים מחוקים</h3>
+                <div class="stat-value">8</div>
+                <div class="stat-label">בסל המחזור</div>
+            </div>
+            <div class="stat-card">
+                <h3>תור שגיאות</h3>
+                <div class="stat-value">2</div>
+                <div class="stat-label">הודעות ממתינות</div>
+            </div>
+            <div class="stat-card">
+                <h3>משתמשים פעילים</h3>
+                <div class="stat-value">147</div>
+                <div class="stat-label">מחוברים כעת</div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="system-status">
+            <h2>סטטוס מערכות</h2>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-icon"></div>
+                    <span>שרת API - פעיל</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-icon"></div>
+                    <span>שרת שיתוף - פעיל</span>
+                </div>
+                <div class="status-item warning">
+                    <div class="status-icon warning"></div>
+                    <span>RabbitMQ - אזהרה</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-icon"></div>
+                    <span>Active Directory - פעיל</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h2>פעולות מהירות</h2>
+            <div class="actions-grid">
+                <button class="action-button" onclick="showFeature('files')">
+                    ניהול קבצים נעולים
+                </button>
+                <button class="action-button" onclick="showFeature('versions')">
+                    שחזור גרסאות קבצים
+                </button>
+                <button class="action-button" onclick="showFeature('deleted')">
+                    שחזור פריטים מחוקים
+                </button>
+                <button class="action-button" onclick="showFeature('permissions')">
+                    בדיקת הרשאות
+                </button>
+                <button class="action-button" onclick="showFeature('users')">
+                    חיפוש משתמשים
+                </button>
+                <button class="action-button" onclick="showFeature('queues')">
+                    ניהול תורי RabbitMQ
+                </button>
+                <button class="action-button secondary" onclick="showFeature('audit')">
+                    לוגי ביקורת
+                </button>
+                <button class="action-button secondary" onclick="showFeature('reports')">
+                    דוחות מערכת
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Connection Test
+        async function testApiConnection() {
+            const indicator = document.getElementById('apiIndicator');
+            const status = document.getElementById('apiStatus');
+            const lastCheck = document.getElementById('lastCheck');
+            const testResult = document.getElementById('testResult');
+            
+            // Show loading state
+            indicator.style.backgroundColor = '#FF9800';
+            status.textContent = 'בודק חיבור...';
+            status.style.color = '#FF9800';
+            
+            try {
+                const response = await fetch('http://localhost:5000/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Success
+                    indicator.style.backgroundColor = '#4CAF50';
+                    status.textContent = 'מחובר בהצלחה';
+                    status.style.color = '#4CAF50';
+                    
+                    testResult.className = 'test-result success';
+                    testResult.textContent = `API Response: ${JSON.stringify(data, null, 2)}`;
+                    testResult.style.display = 'block';
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                // Error
+                indicator.style.backgroundColor = '#F44336';
+                status.textContent = 'שגיאה בחיבור';
+                status.style.color = '#F44336';
+                
+                testResult.className = 'test-result error';
+                testResult.textContent = `Error: ${error.message}`;
+                testResult.style.display = 'block';
+            }
+            
+            lastCheck.textContent = new Date().toLocaleString('he-IL');
+        }
+
+        // Feature placeholder functions
+        function showFeature(feature) {
+            const features = {
+                'files': 'ניהול קבצים נעולים',
+                'versions': 'שחזור גרסאות קבצים',
+                'deleted': 'שחזור פריטים מחוקים',
+                'permissions': 'בדיקת הרשאות',
+                'users': 'חיפוש משתמשים',
+                'queues': 'ניהול תורי RabbitMQ',
+                'audit': 'לוגי ביקורת',
+                'reports': 'דוחות מערכת'
+            };
+            
+            alert(`פתיחת מודול: ${features[feature]}\n\nהמודול יהיה זמין בגרסה המלאה של האפליקציה.`);
+        }
+
+        // Auto-test API connection on page load
+        window.addEventListener('load', function() {
+            setTimeout(testApiConnection, 1000);
+        });
+
+        // Periodic API health check
+        setInterval(testApiConnection, 30000); // Check every 30 seconds
+    </script>
+</body>
+</html> 

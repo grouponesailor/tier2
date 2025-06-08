@@ -11,6 +11,7 @@ public interface IFileManagementService
     Task<List<DeletedItemDto>> GetDeletedItemsAsync();
     Task<bool> RestoreDeletedItemAsync(Guid itemId, string adminUser);
     Task<List<UserPermissionDto>> GetItemPermissionsAsync(Guid itemId);
+    Task<ItemPermissionsResponseBody> GetItemPermissionsByIdAsync(int itemId);
     Task<UserAccessResultDto> CheckUserAccessAsync(string username, Guid itemId, string requiredAccess);
     Task<List<ClassificationChangeLogDto>> GetClassificationHistoryAsync(Guid itemId);
 } 

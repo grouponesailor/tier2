@@ -38,28 +38,60 @@ public class FilesController : ControllerBase
         });
     }
 
+
+
     /// <summary>
-    /// Unlock a specific file
+    /// Unlock a specific file (Updated to use new request/response format)
     /// </summary>
-    [HttpPost("{id}/unlock")]
-    public ActionResult<object> UnlockFile(Guid id, [FromBody] UnlockFileRequest request)
+    [HttpPost("unlock")]
+    public ActionResult<UnlockResponse> UnlockFileById([FromBody] UnlockRequest request)
     {
-        if (string.IsNullOrEmpty(request.AdminUser) || string.IsNullOrEmpty(request.Justification))
-            return BadRequest(new { message = "AdminUser and Justification are required" });
-
-        var success = _dataService.UnlockFile(id, request.AdminUser, request.Justification);
-        
-        if (!success)
-            return BadRequest(new { message = "File not found or not locked" });
-
-        return Ok(new
+        try
         {
-            success = true,
-            message = "File unlocked successfully",
-            fileId = id,
-            unlockedBy = request.AdminUser,
-            timestamp = DateTime.UtcNow
-        });
+            _logger.LogInformation("Mock unlock request received for file ID: {FileId}, Request ID: {ReqId}", 
+                request.RequestBody.Id, request.RequestHeader.ReqId);
+
+            // Try to parse file ID from request body
+            if (!Guid.TryParse(request.RequestBody.Id, out var fileId))
+            {
+                return Ok(new UnlockResponse
+                {
+                    Id = request.RequestBody.Id,
+                    Locked = true,
+                    Signature = string.Empty,
+                    Etag = string.Empty,
+                    ResponseHeader = new ResponseHeader { ReqId = request.RequestHeader.ReqId },
+                    Ex = "Invalid file ID format"
+                });
+            }
+
+            var success = _dataService.UnlockFile(fileId, "system", "API unlock request");
+            
+            var response = new UnlockResponse
+            {
+                Id = request.RequestBody.Id,
+                Locked = !success,
+                Signature = success ? Guid.NewGuid().ToString("N")[..16] : string.Empty,
+                Etag = success ? Guid.NewGuid().ToString("N")[..16] : string.Empty,
+                ResponseHeader = new ResponseHeader { ReqId = request.RequestHeader.ReqId },
+                Ex = success ? null : "File not found or not locked"
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error unlocking file in mock server");
+            return Ok(new UnlockResponse
+            {
+                Id = request.RequestBody?.Id ?? string.Empty,
+                Locked = true,
+                Signature = string.Empty,
+                Etag = string.Empty,
+                ResponseHeader = new ResponseHeader { ReqId = request.RequestHeader?.ReqId ?? string.Empty },
+                Ex = ex.Message
+            });
+        }
     }
 
     /// <summary>
@@ -192,10 +224,44 @@ public class FilesController : ControllerBase
     }
 }
 
+// Legacy format
 public class UnlockFileRequest
 {
     public string AdminUser { get; set; } = string.Empty;
     public string Justification { get; set; } = string.Empty;
+}
+
+// New unlock request/response DTOs
+public class RequestHeader
+{
+    public string ReqId { get; set; } = string.Empty;
+    public int CallingSystemId { get; set; }
+}
+
+public class ResponseHeader
+{
+    public string ReqId { get; set; } = string.Empty;
+}
+
+public class UnlockRequestBody
+{
+    public string Id { get; set; } = string.Empty;
+}
+
+public class UnlockRequest
+{
+    public RequestHeader RequestHeader { get; set; } = new();
+    public UnlockRequestBody RequestBody { get; set; } = new();
+}
+
+public class UnlockResponse
+{
+    public string Id { get; set; } = string.Empty;
+    public bool Locked { get; set; }
+    public string Signature { get; set; } = string.Empty;
+    public string Etag { get; set; } = string.Empty;
+    public ResponseHeader ResponseHeader { get; set; } = new();
+    public string? Ex { get; set; }
 }
 
 public class RestoreVersionRequest

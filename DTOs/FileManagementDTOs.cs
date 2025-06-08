@@ -146,6 +146,39 @@ public class ForceUnlockFileDto
     public bool NotifyUser { get; set; } = true;
 }
 
+// New unlock request/response DTOs
+public class RequestHeader
+{
+    public string ReqId { get; set; } = string.Empty;
+    public int CallingSystemId { get; set; }
+}
+
+public class ResponseHeader
+{
+    public string ReqId { get; set; } = string.Empty;
+}
+
+public class UnlockRequestBody
+{
+    public string Id { get; set; } = string.Empty;
+}
+
+public class UnlockFileRequest
+{
+    public RequestHeader RequestHeader { get; set; } = new();
+    public UnlockRequestBody RequestBody { get; set; } = new();
+}
+
+public class UnlockFileResponse
+{
+    public string Id { get; set; } = string.Empty;
+    public bool Locked { get; set; }
+    public string Signature { get; set; } = string.Empty;
+    public string Etag { get; set; } = string.Empty;
+    public ResponseHeader ResponseHeader { get; set; } = new();
+    public string? Ex { get; set; }
+}
+
 // Recovery DTOs
 public class DeletedItemDto
 {

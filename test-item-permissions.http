@@ -1,0 +1,19 @@
+### Test Get Item Permissions API
+
+### Get Item Permissions - Example request
+GET https://localhost:5000/api/midur/getItemPermissions/111?reqId=222&callingSystemId=333
+Accept: application/json
+
+### Get Item Permissions - Different itemId
+GET https://localhost:5000/api/midur/getItemPermissions/456?reqId=789&callingSystemId=999
+Accept: application/json
+
+### Get Item Permissions - Minimal request (no query params)
+GET https://localhost:5000/api/midur/getItemPermissions/123
+Accept: application/json
+
+### Test against Mock Server directly
+
+### Mock Server - Get Item Permissions
+GET https://localhost:5001/api/midur/getItemPermissions/111?reqId=222&callingSystemId=333
+Accept: application/json 

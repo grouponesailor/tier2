@@ -41,11 +41,16 @@ public class FileManagementService : IFileManagementService
     {
         try
         {
-            var request = new { AdminUser = adminUser, Justification = justification };
+            // Use the new unlock API format
+            var request = new UnlockFileRequest
+            {
+                RequestHeader = new RequestHeader { ReqId = Guid.NewGuid().ToString(), CallingSystemId = 1 },
+                RequestBody = new UnlockRequestBody { Id = fileId.ToString() }
+            };
             var json = JsonSerializer.Serialize(request);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync($"{_mockServerBaseUrl}/api/files/{fileId}/unlock", content);
+            var response = await _httpClient.PostAsync($"{_mockServerBaseUrl}/api/files/unlock", content);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
@@ -130,6 +135,29 @@ public class FileManagementService : IFileManagementService
         {
             _logger.LogError(ex, "Error retrieving permissions");
             return new List<UserPermissionDto>();
+        }
+    }
+
+    public async Task<ItemPermissionsResponseBody> GetItemPermissionsByIdAsync(int itemId)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"{_mockServerBaseUrl}/api/midur/getItemPermissions/{itemId}");
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<ItemPermissionsResponse>(jsonResponse, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return result?.ResponseBody ?? new ItemPermissionsResponseBody { ItemId = itemId };
+            }
+            return new ItemPermissionsResponseBody { ItemId = itemId };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving item permissions by ID");
+            return new ItemPermissionsResponseBody { ItemId = itemId };
         }
     }
 

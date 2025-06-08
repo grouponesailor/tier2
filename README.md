@@ -144,7 +144,8 @@ tier2-management-ui/
 
 ### Files Management
 - `GET /api/files` - List files with search and pagination
-- `POST /api/files/{id}/unlock` - Release file lock
+- `POST /api/files/unlock` - שחרור נעילת קובץ (Release file lock)
+- `GET /api/midur/getItemPermissions/{itemId}` - שליפת הרשאות פריט (Get item permissions)
 - `GET /api/files/{id}/versions` - Get file versions
 - `POST /api/files/{id}/restore-version` - Restore file version
 
