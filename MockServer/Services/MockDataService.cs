@@ -289,13 +289,17 @@ public class MockDataService
         }
 
         var queryLower = query.ToLower();
+        _logger.LogInformation("Searching for query: '{Query}' across {FileCount} files", query, files.Count());
         
         // Search by filename and content
-        return files.Where(file => 
+        var matchingFiles = files.Where(file => 
         {
             // Search in filename
             if (file.Name.ToLower().Contains(queryLower))
+            {
+                _logger.LogInformation("File '{FileName}' matches by filename", file.Name);
                 return true;
+            }
 
             // Search in file content if exists
             if (_fileContents.TryGetValue(file.Id, out var filePath))
@@ -303,7 +307,10 @@ public class MockDataService
                 try
                 {
                     var fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-                    return fileContent.ToLower().Contains(queryLower);
+                    var contentMatches = fileContent.ToLower().Contains(queryLower);
+                    _logger.LogInformation("File '{FileName}' content search result: {Matches} (path: {FilePath})", 
+                        file.Name, contentMatches, filePath);
+                    return contentMatches;
                 }
                 catch (Exception ex)
                 {
@@ -311,9 +318,16 @@ public class MockDataService
                     return false;
                 }
             }
+            else
+            {
+                _logger.LogWarning("File '{FileName}' (ID: {FileId}) not found in _fileContents dictionary", file.Name, file.Id);
+            }
 
             return false;
-        });
+        }).ToList();
+        
+        _logger.LogInformation("Search completed. Found {MatchCount} matching files for query '{Query}'", matchingFiles.Count, query);
+        return matchingFiles;
     }
 
     #endregion
@@ -524,9 +538,13 @@ public class MockDataService
 
     private void InitializeFiles()
     {
+        // Clear existing files to prevent duplicates
+        _files.Clear();
+        _fileContents.Clear();
+        
         var documentsFolder = _folders.First(f => f.Name == "Documents");
         var projectsFolder = _folders.First(f => f.Name == "Projects");
-        var random = new Random(42); // Fixed seed for consistent data
+        var random = new Random(); // Remove fixed seed to ensure all files are loaded
 
         // Path to the mockupdata directory
         var mockupDataPath = Path.Combine(Directory.GetCurrentDirectory(), "mockupdata");
@@ -540,6 +558,8 @@ public class MockDataService
         var files = new List<MockFile>();
         var txtFiles = Directory.GetFiles(mockupDataPath, "*.txt");
         
+        _logger.LogInformation("Initializing files. Found {FileCount} .txt files in mockupdata directory", txtFiles.Length);
+        
         var classifications = new[] { "Public", "Internal", "Confidential", "Secret" };
         var users = new[] { "john.doe", "jane.smith", "bob.wilson", "alice.brown", "charlie.davis", "diana.lee", "frank.miller", "grace.wong" };
         var paths = new[] { "/Documents", "/Projects", "/Documents/Archive", "/Projects/Current", "/Projects/Completed" };
@@ -547,15 +567,18 @@ public class MockDataService
         foreach (var filePath in txtFiles)
         {
             var fileName = Path.GetFileName(filePath);
+            var fileNameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
             var fileId = Guid.NewGuid();
             var creator = users[random.Next(users.Length)];
             var classification = classifications[random.Next(classifications.Length)];
             var folderPath = paths[random.Next(paths.Length)];
             
+            _logger.LogInformation("Processing file: {FileName} -> {FileNameWithoutExt} (ID: {FileId})", fileName, fileNameWithoutExt, fileId);
+            
             var file = new MockFile
             {
                 Id = fileId,
-                Name = fileName,
+                Name = Path.GetFileNameWithoutExtension(fileName),
                 Path = $"{folderPath}/{fileName}",
                 Size = new FileInfo(filePath).Length,
                 Extension = "txt",
@@ -575,53 +598,14 @@ public class MockDataService
 
             // Store the file path for content loading
             _fileContents[fileId] = filePath; // Store file path instead of content
-
-            // Add versions
-            file.Versions.AddRange(new[]
-            {
-                new MockFileVersion
-                {
-                    VersionNumber = 1,
-                    CreatedBy = file.CreatedBy ?? "system",
-                    CreatedAt = file.CreatedAt,
-                    Size = file.Size - random.Next(100, 1000),
-                    Comments = "Initial version"
-                },
-                new MockFileVersion
-                {
-                    VersionNumber = 2,
-                    CreatedBy = file.CreatedBy ?? "system",
-                    CreatedAt = file.CreatedAt.AddDays(random.Next(1, 30)),
-                    Size = file.Size,
-                    Comments = "Updated content and formatting",
-                    IsCurrent = true
-                }
-            });
-
-            // Add permissions
-            file.Permissions.AddRange(new[]
-            {
-                new MockPermission
-                {
-                    PrincipalId = file.CreatedBy ?? "system",
-                    PrincipalType = "User",
-                    AccessLevel = "Delete"
-                },
-                new MockPermission
-                {
-                    PrincipalId = "File Managers",
-                    PrincipalType = "Group",
-                    AccessLevel = "Modify",
-                    IsInherited = true,
-                    InheritedFrom = "Parent Folder"
-                }
-            });
+            _logger.LogInformation("Added to _fileContents: {FileId} -> {FilePath}", fileId, filePath);
 
             files.Add(file);
+            _logger.LogInformation("Added file to collection: {FileName} (Total so far: {Count})", fileNameWithoutExt, files.Count);
         }
 
         _files.AddRange(files);
-        _logger.LogInformation("Loaded {FileCount} files from mockupdata directory", files.Count);
+        _logger.LogInformation("Loaded {FileCount} files from mockupdata directory. Total files in system: {TotalFiles}", files.Count, _files.Count);
     }
 
     private void InitializeQueues()

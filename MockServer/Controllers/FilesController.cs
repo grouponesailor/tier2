@@ -410,6 +410,29 @@ public class FilesController : ControllerBase
             });
         }
     }
+
+    /// <summary>
+    /// Debug endpoint to check loaded files
+    /// </summary>
+    [HttpGet("debug")]
+    public ActionResult<object> GetDebugInfo()
+    {
+        var allFiles = _dataService.GetAllFiles().ToList();
+        
+        var debugInfo = new
+        {
+            TotalFiles = allFiles.Count,
+            FileDetails = allFiles.Select(f => new
+            {
+                f.Id,
+                f.Name,
+                f.Path,
+                Classification = f.Classification?.Level
+            }).ToList()
+        };
+        
+        return Ok(debugInfo);
+    }
 }
 
 // Legacy format
