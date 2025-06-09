@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace MockCollaborationServer.Models;
 
 public class MockFile
@@ -122,6 +124,89 @@ public class MockQueue
     public int ConsumerCount { get; set; } = 0;
     public bool IsHealthy { get; set; } = true;
     public DateTime LastChecked { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Search response models for files search endpoint
+/// </summary>
+public class FileSearchResponse
+{
+    public PagingInfo Paging { get; set; } = new();
+    public List<FileSearchHit> Hits { get; set; } = new();
+}
+
+public class PagingInfo
+{
+    [JsonPropertyName("pit_id")]
+    public string PitId { get; set; } = string.Empty;
+    public List<long> Sort { get; set; } = new();
+}
+
+public class FileSearchHit
+{
+    public FileMetadata Metadata { get; set; } = new();
+}
+
+public class FileMetadata
+{
+    public string AuthorizationLevel { get; set; } = "FULLY_AUTHORIZED";
+    public string Extension { get; set; } = string.Empty;
+    public DateTime UpdateDate { get; set; }
+    public string UpdateId { get; set; } = string.Empty;
+    public string FullNamePath { get; set; } = string.Empty;
+    public string AcExternalId { get; set; } = string.Empty;
+    public int AcInheriteType { get; set; } = 0;
+    public string OwnerId { get; set; } = string.Empty;
+    public int Type { get; set; } = 1;
+    public string FullPath { get; set; } = string.Empty;
+    public DateTime LastOperationDate { get; set; }
+    public string ParentId { get; set; } = string.Empty;
+    public string LastOperationByUser { get; set; } = string.Empty;
+    public string ParentName { get; set; } = string.Empty;
+    public long Size { get; set; }
+    public string LastOperation { get; set; } = "file_saved";
+    public string Name { get; set; } = string.Empty;
+    public List<object> Attributes { get; set; } = new();
+    public string Id { get; set; } = string.Empty;
+    public int Status { get; set; } = 1;
+    public DateTime CreateDate { get; set; }
+}
+
+/// <summary>
+/// Request models for files search POST endpoint
+/// </summary>
+public class FileSearchRequest
+{
+    public string? Q { get; set; }
+    public object? Filters { get; set; }
+    public List<SortField>? Sort { get; set; }
+    public string System { get; set; } = string.Empty;
+    public string Uuid { get; set; } = string.Empty;
+}
+
+public class SortField
+{
+    public string Field { get; set; } = string.Empty;
+    public string Order { get; set; } = "desc";
+}
+
+/// <summary>
+/// File views models for MockServer
+/// </summary>
+public class FileViewsResponse
+{
+    public string ItemId { get; set; } = string.Empty;
+    public List<FileViewInfo> Views { get; set; } = new();
+    public ResponseHeader ResponseHeader { get; set; } = new();
+    public string? Ex { get; set; }
+}
+
+public class FileViewInfo
+{
+    public string UserId { get; set; } = string.Empty;
+    public int ViewCounter { get; set; }
+    public DateTime FirstViewDate { get; set; }
+    public DateTime LastViewDate { get; set; }
 }
 
  

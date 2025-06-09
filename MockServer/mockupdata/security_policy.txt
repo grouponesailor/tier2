@@ -1,0 +1,53 @@
+Information Security Policy v3.2
+
+Effective Date: January 1, 2024
+Review Date: December 31, 2024
+Owner: Chief Information Security Officer
+
+1. Purpose:
+This policy establishes guidelines for protecting company information assets
+and ensuring compliance with industry standards and regulations.
+
+2. Scope:
+This policy applies to all employees, contractors, and third-party vendors
+who have access to company systems and data.
+
+3. Data Classification:
+- Public: Information that can be freely shared
+- Internal: Information for internal use only
+- Confidential: Sensitive business information
+- Restricted: Highly sensitive data requiring special handling
+
+4. Access Control:
+- Principle of least privilege must be applied
+- Multi-factor authentication required for all systems
+- Access reviews conducted quarterly
+- Immediate revocation upon termination
+
+5. Password Requirements:
+- Minimum 12 characters
+- Combination of uppercase, lowercase, numbers, and symbols
+- Changed every 90 days
+- No reuse of last 12 passwords
+- Password managers encouraged
+
+6. Data Handling:
+- Encryption required for data in transit and at rest
+- Regular backups with tested recovery procedures
+- Secure disposal of sensitive data
+- Data retention policies strictly enforced
+
+7. Incident Response:
+- Report security incidents within 1 hour
+- Incident response team activation procedures
+- Communication protocols during incidents
+- Post-incident review and documentation
+
+8. Training and Awareness:
+- Annual security training mandatory
+- Phishing simulation exercises
+- Security awareness communications
+- Role-specific training requirements
+
+Violations of this policy may result in disciplinary action up to and
+including termination of employment. 

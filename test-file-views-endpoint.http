@@ -1,0 +1,38 @@
+### Test File Views Endpoint - Main API and MockServer
+
+@mainApiUrl = http://localhost:5000
+@mockServerUrl = http://localhost:5002
+
+### Test Main API File Views Endpoint
+GET {{mainApiUrl}}/api/file/views/id/111
+Content-Type: application/json
+
+###
+
+### Test Main API File Views Endpoint with different ID
+GET {{mainApiUrl}}/api/file/views/id/222
+Content-Type: application/json
+
+###
+
+### Test MockServer File Views Endpoint
+GET {{mockServerUrl}}/api/files/views/id/111
+Content-Type: application/json
+
+###
+
+### Test MockServer File Views Endpoint with different ID
+GET {{mockServerUrl}}/api/files/views/id/222
+Content-Type: application/json
+
+###
+
+### Test MockServer File Views Endpoint with different ID
+GET {{mockServerUrl}}/api/files/views/id/333
+Content-Type: application/json
+
+###
+
+### Test MockServer File Views Endpoint with different ID
+GET {{mockServerUrl}}/api/files/views/id/abc123
+Content-Type: application/json 

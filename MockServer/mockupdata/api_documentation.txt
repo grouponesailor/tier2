@@ -1,0 +1,81 @@
+API Documentation v2.0
+
+Base URL: https://api.example.com/v2
+Authentication: Bearer Token (JWT)
+Content-Type: application/json
+
+Endpoints Overview:
+
+1. Authentication Endpoints:
+   POST /auth/login
+   POST /auth/refresh
+   POST /auth/logout
+
+2. User Management:
+   GET /users
+   GET /users/{id}
+   POST /users
+   PUT /users/{id}
+   DELETE /users/{id}
+
+3. File Operations:
+   GET /files
+   POST /files/search
+   GET /files/{id}
+   POST /files/upload
+   PUT /files/{id}
+   DELETE /files/{id}
+   GET /files/{id}/versions
+
+4. Folder Operations:
+   GET /folders
+   GET /folders/{id}
+   POST /folders
+   PUT /folders/{id}
+   DELETE /folders/{id}
+
+5. Permissions:
+   GET /permissions/{resourceId}
+   PUT /permissions/{resourceId}
+
+Request Examples:
+
+POST /auth/login
+{
+  "username": "john.doe@company.com",
+  "password": "SecurePassword123!"
+}
+
+Response:
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expires_in": 900,
+  "token_type": "Bearer"
+}
+
+POST /files/search
+{
+  "query": "project requirements",
+  "filters": {
+    "type": "document",
+    "modified_after": "2024-01-01T00:00:00Z"
+  },
+  "sort": {
+    "field": "modified_date",
+    "order": "desc"
+  },
+  "limit": 20,
+  "offset": 0
+}
+
+Error Codes:
+400 - Bad Request
+401 - Unauthorized
+403 - Forbidden
+404 - Not Found
+500 - Internal Server Error
+
+Rate Limiting:
+- 1000 requests per hour per API key
+- 100 requests per minute per IP address 

@@ -247,6 +247,25 @@ public class RestoreResponse
     public string? Ex { get; set; }
 }
 
+/// <summary>
+/// File views DTOs
+/// </summary>
+public class FileViewsResponse
+{
+    public string ItemId { get; set; } = string.Empty;
+    public List<FileViewInfo> Views { get; set; } = new();
+    public ResponseHeader ResponseHeader { get; set; } = new();
+    public string? Ex { get; set; }
+}
+
+public class FileViewInfo
+{
+    public string UserId { get; set; } = string.Empty;
+    public int ViewCounter { get; set; }
+    public DateTime FirstViewDate { get; set; }
+    public DateTime LastViewDate { get; set; }
+}
+
 // New DTOs for files search endpoint
 public class FilesSearchRequest
 {

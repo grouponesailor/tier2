@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MockCollaborationServer.Models;
 using MockCollaborationServer.Services;
+using System.IO;
 
 namespace MockCollaborationServer.Controllers;
 
@@ -15,6 +16,63 @@ public class FilesController : ControllerBase
     {
         _dataService = dataService;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Get file views data
+    /// </summary>
+    [HttpGet("views/id/{fileId}")]
+    public ActionResult<FileViewsResponse> GetFileViews(string fileId)
+    {
+        try
+        {
+            _logger.LogInformation("Mock file views request received for file ID: {FileId}", fileId);
+
+            var random = new Random();
+            var users = new[] { "011111", "022222", "033333", "044444", "055555" };
+            
+            // Generate mock view data
+            var views = new List<FileViewInfo>();
+            var numViewers = random.Next(2, 5); // 2-4 viewers
+            
+            for (int i = 0; i < numViewers; i++)
+            {
+                var userId = users[i];
+                var viewCount = random.Next(1, 10);
+                var firstViewDays = random.Next(1, 90);
+                var lastViewDays = random.Next(0, firstViewDays);
+                
+                views.Add(new FileViewInfo
+                {
+                    UserId = userId,
+                    ViewCounter = viewCount,
+                    FirstViewDate = DateTime.UtcNow.AddDays(-firstViewDays),
+                    LastViewDate = DateTime.UtcNow.AddDays(-lastViewDays)
+                });
+            }
+
+            var response = new FileViewsResponse
+            {
+                ItemId = fileId,
+                Views = views,
+                ResponseHeader = new ResponseHeader { ReqId = Guid.NewGuid().ToString("N")[..8] },
+                Ex = null
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving file views for file ID: {FileId}", fileId);
+            
+            return Ok(new FileViewsResponse
+            {
+                ItemId = fileId,
+                Views = new List<FileViewInfo>(),
+                ResponseHeader = new ResponseHeader { ReqId = Guid.NewGuid().ToString("N")[..8] },
+                Ex = ex.Message
+            });
+        }
     }
 
     /// <summary>
@@ -37,8 +95,6 @@ public class FilesController : ControllerBase
             canUnlock = file.IsLocked
         });
     }
-
-
 
     /// <summary>
     /// Unlock a specific file (Updated to use new request/response format)
@@ -91,6 +147,105 @@ public class FilesController : ControllerBase
                 ResponseHeader = new ResponseHeader { ReqId = request.RequestHeader?.ReqId ?? string.Empty },
                 Ex = ex.Message
             });
+        }
+    }
+
+    /// <summary>
+    /// Search files with POST request and JSON body (Updated format)
+    /// </summary>
+    [HttpPost]
+    public ActionResult<FileSearchResponse> SearchFilesPost([FromBody] FileSearchRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Mock files search POST request received. Query: {Query}, System: {System}, UUID: {UUID}", 
+                request.Q, request.System, request.Uuid);
+
+            var searchResults = _dataService.SearchFiles(request.Q, "hide_classified");
+            var random = new Random();
+
+            // Apply sorting if specified
+            if (request.Sort?.Any() == true)
+            {
+                var sortField = request.Sort.First();
+                searchResults = sortField.Field.ToLower() switch
+                {
+                    "updatedate" => sortField.Order.ToLower() == "desc" 
+                        ? searchResults.OrderByDescending(f => f.CreatedAt)
+                        : searchResults.OrderBy(f => f.CreatedAt),
+                    "name" => sortField.Order.ToLower() == "desc"
+                        ? searchResults.OrderByDescending(f => f.Name)
+                        : searchResults.OrderBy(f => f.Name),
+                    "size" => sortField.Order.ToLower() == "desc"
+                        ? searchResults.OrderByDescending(f => f.Size)
+                        : searchResults.OrderBy(f => f.Size),
+                    _ => searchResults.OrderByDescending(f => f.CreatedAt)
+                };
+            }
+
+            // Convert to search response format
+            var response = new FileSearchResponse
+            {
+                Paging = new PagingInfo
+                {
+                    PitId = Convert.ToBase64String(Guid.NewGuid().ToByteArray()),
+                    Sort = new List<long> { random.NextInt64(1000000000, 9999999999), random.NextInt64(100000000000, 999999999999) }
+                },
+                Hits = searchResults.Select(file => new FileSearchHit
+                {
+                    Metadata = new FileMetadata
+                    {
+                        AuthorizationLevel = file.Classification.Level == "Secret" || file.Classification.Level == "Confidential" 
+                            ? "RESTRICTED" : "FULLY_AUTHORIZED",
+                        Extension = file.Extension ?? string.Empty,
+                        UpdateDate = file.CreatedAt.AddDays(random.Next(1, 30)),
+                        UpdateId = Guid.NewGuid().ToString("N")[..8],
+                        FullNamePath = file.Path,
+                        AcExternalId = string.Empty,
+                        AcInheriteType = 0,
+                        OwnerId = file.CreatedBy ?? "system",
+                        Type = 1,
+                        FullPath = file.Path,
+                        LastOperationDate = DateTime.UtcNow.AddMinutes(-random.Next(1, 1440)),
+                        ParentId = Guid.NewGuid().ToString("N")[..8],
+                        LastOperationByUser = file.CreatedBy ?? "system",
+                        ParentName = GetParentFolderName(file.Path),
+                        Size = file.Size,
+                        LastOperation = file.IsLocked ? "file_locked" : "file_saved",
+                        Name = Path.GetFileNameWithoutExtension(file.Name),
+                        Attributes = new List<object>(),
+                        Id = file.Id.ToString("N")[..8],
+                        Status = file.IsDeleted ? 0 : 1,
+                        CreateDate = file.CreatedAt
+                    }
+                }).ToList()
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching files in mock server");
+            return StatusCode(500, new { error = "Internal server error", message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Helper method to extract parent folder name from file path
+    /// </summary>
+    private static string GetParentFolderName(string filePath)
+    {
+        try
+        {
+            var directoryPath = Path.GetDirectoryName(filePath);
+            if (string.IsNullOrEmpty(directoryPath) || directoryPath == "/")
+                return "Root";
+            
+            return Path.GetFileName(directoryPath) ?? "Unknown";
+        }
+        catch
+        {
+            return "Unknown";
         }
     }
 
@@ -271,11 +426,6 @@ public class RequestHeader
     public int CallingSystemId { get; set; }
 }
 
-public class ResponseHeader
-{
-    public string ReqId { get; set; } = string.Empty;
-}
-
 public class UnlockRequestBody
 {
     public string Id { get; set; } = string.Empty;
@@ -293,7 +443,7 @@ public class UnlockResponse
     public bool Locked { get; set; }
     public string Signature { get; set; } = string.Empty;
     public string Etag { get; set; } = string.Empty;
-    public ResponseHeader ResponseHeader { get; set; } = new();
+    public Models.ResponseHeader ResponseHeader { get; set; } = new();
     public string? Ex { get; set; }
 }
 
@@ -321,6 +471,6 @@ public class FileRestoreRequest
 public class FileRestoreResponse
 {
     public string Id { get; set; } = string.Empty;
-    public ResponseHeader ResponseHeader { get; set; } = new();
+    public Models.ResponseHeader ResponseHeader { get; set; } = new();
     public string? Ex { get; set; }
 } 

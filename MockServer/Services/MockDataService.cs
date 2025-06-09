@@ -1,5 +1,6 @@
 using MockCollaborationServer.Models;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace MockCollaborationServer.Services;
 
@@ -10,11 +11,19 @@ public class MockDataService
     private readonly List<MockUser> _users = new();
     private readonly List<MockAdGroup> _adGroups = new();
     private readonly List<MockQueue> _queues = new();
+    private readonly Dictionary<Guid, string> _fileContents = new(); // Store file contents for search
     private readonly ILogger<MockDataService> _logger;
+    
+    // Physical file storage path
+    private readonly string _mockFilesPath;
 
     public MockDataService(ILogger<MockDataService> logger)
     {
         _logger = logger;
+        
+        // Set up the mock files directory
+        _mockFilesPath = Path.Combine(Directory.GetCurrentDirectory(), "MockFiles");
+        
         InitializeSampleData();
     }
 
@@ -258,7 +267,112 @@ public class MockDataService
 
     #endregion
 
+    #region Search Operations
+
+    /// <summary>
+    /// Search files by name and content
+    /// </summary>
+    public IEnumerable<MockFile> SearchFiles(string? query, string? classification = null)
+    {
+        var files = GetAllFiles();
+        
+        // Filter by classification if provided
+        if (!string.IsNullOrEmpty(classification) && classification == "hide_classified")
+        {
+            files = files.Where(f => f.Classification.Level != "Confidential" && f.Classification.Level != "Secret");
+        }
+
+        // If no query, return all files
+        if (string.IsNullOrEmpty(query))
+        {
+            return files;
+        }
+
+        var queryLower = query.ToLower();
+        
+        // Search by filename and content
+        return files.Where(file => 
+        {
+            // Search in filename
+            if (file.Name.ToLower().Contains(queryLower))
+                return true;
+
+            // Search in file content if exists
+            if (_fileContents.TryGetValue(file.Id, out var filePath))
+            {
+                try
+                {
+                    var fileContent = File.ReadAllText(filePath, Encoding.UTF8);
+                    return fileContent.ToLower().Contains(queryLower);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to read file content for search: {FilePath}", filePath);
+                    return false;
+                }
+            }
+
+            return false;
+        });
+    }
+
+    #endregion
+
     #region Data Initialization
+
+    /// <summary>
+    /// Saves file content to physical .txt file on disk
+    /// </summary>
+    private void SaveFileToDisc(Guid fileId, string fileName, string content)
+    {
+        try
+        {
+            // Ensure the MockFiles directory exists
+            if (!Directory.Exists(_mockFilesPath))
+            {
+                Directory.CreateDirectory(_mockFilesPath);
+                _logger.LogInformation("Created MockFiles directory at {Path}", _mockFilesPath);
+            }
+
+            // Create filename with ID to ensure uniqueness (remove original extension, add .txt)
+            var txtFileName = $"{fileId}_{Path.GetFileNameWithoutExtension(fileName)}.txt";
+            var filePath = Path.Combine(_mockFilesPath, txtFileName);
+
+            // Write content to file
+            File.WriteAllText(filePath, content, Encoding.UTF8);
+            
+            _logger.LogDebug("Saved mock file {FileName} to {FilePath}", fileName, filePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save mock file {FileName} to disk", fileName);
+        }
+    }
+
+    /// <summary>
+    /// Loads file content from physical file on disk
+    /// </summary>
+    private string? LoadFileFromDisc(Guid fileId, string fileName)
+    {
+        try
+        {
+            var txtFileName = $"{fileId}_{Path.GetFileNameWithoutExtension(fileName)}.txt";
+            var filePath = Path.Combine(_mockFilesPath, txtFileName);
+
+            if (File.Exists(filePath))
+            {
+                return File.ReadAllText(filePath, Encoding.UTF8);
+            }
+
+            _logger.LogWarning("Mock file not found on disk: {FilePath}", filePath);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load mock file {FileName} from disk", fileName);
+            return null;
+        }
+    }
 
     private void InitializeSampleData()
     {
@@ -412,67 +526,56 @@ public class MockDataService
     {
         var documentsFolder = _folders.First(f => f.Name == "Documents");
         var projectsFolder = _folders.First(f => f.Name == "Projects");
+        var random = new Random(42); // Fixed seed for consistent data
 
-        var files = new[]
+        // Path to the mockupdata directory
+        var mockupDataPath = Path.Combine(Directory.GetCurrentDirectory(), "mockupdata");
+        
+        if (!Directory.Exists(mockupDataPath))
         {
-            new MockFile
+            _logger.LogWarning("Mockupdata directory not found at {Path}", mockupDataPath);
+            return;
+        }
+
+        var files = new List<MockFile>();
+        var txtFiles = Directory.GetFiles(mockupDataPath, "*.txt");
+        
+        var classifications = new[] { "Public", "Internal", "Confidential", "Secret" };
+        var users = new[] { "john.doe", "jane.smith", "bob.wilson", "alice.brown", "charlie.davis", "diana.lee", "frank.miller", "grace.wong" };
+        var paths = new[] { "/Documents", "/Projects", "/Documents/Archive", "/Projects/Current", "/Projects/Completed" };
+
+        foreach (var filePath in txtFiles)
+        {
+            var fileName = Path.GetFileName(filePath);
+            var fileId = Guid.NewGuid();
+            var creator = users[random.Next(users.Length)];
+            var classification = classifications[random.Next(classifications.Length)];
+            var folderPath = paths[random.Next(paths.Length)];
+            
+            var file = new MockFile
             {
-                Id = Guid.Parse("10000000-0000-0000-0000-000000000001"),
-                Name = "Important Document.docx",
-                Path = "/Documents/Important Document.docx",
-                Size = 1024000,
-                Extension = "docx",
-                IsLocked = true,
-                LockedBy = "john.doe",
-                LockTimestamp = DateTime.UtcNow.AddHours(-2),
-                CreatedBy = "jane.smith",
+                Id = fileId,
+                Name = fileName,
+                Path = $"{folderPath}/{fileName}",
+                Size = new FileInfo(filePath).Length,
+                Extension = "txt",
+                IsLocked = random.Next(100) < 15, // 15% chance of being locked
+                LockedBy = random.Next(100) < 15 ? users[random.Next(users.Length)] : null,
+                LockTimestamp = random.Next(100) < 15 ? DateTime.UtcNow.AddHours(-random.Next(1, 48)) : null,
+                CreatedBy = creator,
+                CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 365)),
                 Classification = new MockClassification
                 {
-                    Level = "Confidential",
-                    ChangedBy = "jane.smith",
-                    ChangedAt = DateTime.UtcNow.AddDays(-1),
-                    Justification = "Contains sensitive information",
-                    History = new List<MockClassificationHistory>
-                    {
-                        new()
-                        {
-                            PreviousLevel = "Internal",
-                            NewLevel = "Confidential",
-                            ChangedBy = "jane.smith",
-                            ChangedAt = DateTime.UtcNow.AddDays(-1),
-                            Justification = "Contains sensitive information"
-                        }
-                    }
+                    Level = classification,
+                    ChangedBy = creator,
+                    ChangedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30)),
+                    Justification = $"Set to {classification} based on content sensitivity"
                 }
-            },
-            new MockFile
-            {
-                Id = Guid.Parse("10000000-0000-0000-0000-000000000002"),
-                Name = "Project Plan.pdf",
-                Path = "/Projects/Project Plan.pdf",
-                Size = 2048000,
-                Extension = "pdf",
-                IsLocked = false,
-                CreatedBy = "bob.wilson",
-                Classification = new MockClassification { Level = "Internal" }
-            },
-            new MockFile
-            {
-                Id = Guid.Parse("10000000-0000-0000-0000-000000000003"),
-                Name = "Deleted File.txt",
-                Path = "/Documents/Deleted File.txt",
-                Size = 512,
-                Extension = "txt",
-                IsDeleted = true,
-                DeletedBy = "john.doe",
-                DeletedAt = DateTime.UtcNow.AddDays(-2),
-                CreatedBy = "jane.smith",
-                Classification = new MockClassification { Level = "Public" }
-            }
-        };
+            };
 
-        foreach (var file in files)
-        {
+            // Store the file path for content loading
+            _fileContents[fileId] = filePath; // Store file path instead of content
+
             // Add versions
             file.Versions.AddRange(new[]
             {
@@ -480,17 +583,17 @@ public class MockDataService
                 {
                     VersionNumber = 1,
                     CreatedBy = file.CreatedBy ?? "system",
-                    CreatedAt = DateTime.UtcNow.AddDays(-5),
-                    Size = file.Size - 1000,
+                    CreatedAt = file.CreatedAt,
+                    Size = file.Size - random.Next(100, 1000),
                     Comments = "Initial version"
                 },
                 new MockFileVersion
                 {
                     VersionNumber = 2,
                     CreatedBy = file.CreatedBy ?? "system",
-                    CreatedAt = DateTime.UtcNow.AddDays(-3),
+                    CreatedAt = file.CreatedAt.AddDays(random.Next(1, 30)),
                     Size = file.Size,
-                    Comments = "Updated content",
+                    Comments = "Updated content and formatting",
                     IsCurrent = true
                 }
             });
@@ -513,9 +616,12 @@ public class MockDataService
                     InheritedFrom = "Parent Folder"
                 }
             });
+
+            files.Add(file);
         }
 
         _files.AddRange(files);
+        _logger.LogInformation("Loaded {FileCount} files from mockupdata directory", files.Count);
     }
 
     private void InitializeQueues()

@@ -74,4 +74,64 @@ Content-Type: application/json
   ],
   "system": "333",
   "uuid": "444"
-} 
+}
+
+### Test Files Search Endpoint - MockServer
+
+# Basic search without query (get all files with hide_classified)
+GET {{mockServerUrl}}/api/files?classification=hide_classified
+Content-Type: application/json
+
+###
+
+# Search for "project" in file names and content
+GET {{mockServerUrl}}/api/files?q=project&classification=hide_classified
+Content-Type: application/json
+
+###
+
+# Search for "technical" in file names and content
+GET {{mockServerUrl}}/api/files?q=technical&classification=hide_classified
+Content-Type: application/json
+
+###
+
+# Search for "requirements" in file names and content
+GET {{mockServerUrl}}/api/files?q=requirements&classification=hide_classified
+Content-Type: application/json
+
+###
+
+# Search for "security" in file names and content
+GET {{mockServerUrl}}/api/files?q=security&classification=hide_classified
+Content-Type: application/json
+
+###
+
+# Search for "testing" in file names and content
+GET {{mockServerUrl}}/api/files?q=testing&classification=hide_classified
+Content-Type: application/json
+
+###
+
+# Search for specific extension files
+GET {{mockServerUrl}}/api/files?q=pdf&classification=hide_classified
+Content-Type: application/json
+
+###
+
+# Search without classification filter (should include all files)
+GET {{mockServerUrl}}/api/files?q=document
+Content-Type: application/json
+
+###
+
+# Search with just classification (no query)
+GET {{mockServerUrl}}/api/files?classification=hide_classified
+Content-Type: application/json
+
+###
+
+# Search for content that exists in file content
+GET {{mockServerUrl}}/api/files?q=stakeholder&classification=hide_classified
+Content-Type: application/json 

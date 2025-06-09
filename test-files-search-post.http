@@ -1,0 +1,114 @@
+### Test Files Search POST Endpoint - MockServer
+
+@mockServerUrl = http://localhost:5002
+
+### Search for "project" files with classification filtering
+POST {{mockServerUrl}}/api/files
+Content-Type: application/json
+
+{
+  "q": "project",
+  "filters": null,
+  "sort": [
+    {
+      "field": "updateDate",
+      "order": "desc"
+    }
+  ],
+  "system": "111",
+  "uuid": "222"
+}
+
+###
+
+### Search for "technical" files
+POST {{mockServerUrl}}/api/files
+Content-Type: application/json
+
+{
+  "q": "technical",
+  "filters": null,
+  "sort": [
+    {
+      "field": "name",
+      "order": "asc"
+    }
+  ],
+  "system": "111",
+  "uuid": "333"
+}
+
+###
+
+### Search for "security" files
+POST {{mockServerUrl}}/api/files
+Content-Type: application/json
+
+{
+  "q": "security",
+  "filters": null,
+  "sort": [
+    {
+      "field": "size",
+      "order": "desc"
+    }
+  ],
+  "system": "111",
+  "uuid": "444"
+}
+
+###
+
+### Search for "stakeholder" content (should search in file content)
+POST {{mockServerUrl}}/api/files
+Content-Type: application/json
+
+{
+  "q": "stakeholder",
+  "filters": null,
+  "sort": [
+    {
+      "field": "updateDate",
+      "order": "desc"
+    }
+  ],
+  "system": "111",
+  "uuid": "555"
+}
+
+###
+
+### Search for "shoki" content (as per your example)
+POST {{mockServerUrl}}/api/files
+Content-Type: application/json
+
+{
+  "q": "shoki",
+  "filters": null,
+  "sort": [
+    {
+      "field": "updateDate",
+      "order": "desc"
+    }
+  ],
+  "system": "111",
+  "uuid": "222"
+}
+
+###
+
+### Test File Views Endpoint - MockServer
+GET {{mockServerUrl}}/api/files/views/id/111
+Content-Type: application/json
+
+###
+
+### Test File Views Endpoint with different ID
+GET {{mockServerUrl}}/api/files/views/id/222
+Content-Type: application/json
+
+###
+
+### Test File Views Endpoint with string ID
+GET {{mockServerUrl}}/api/files/views/id/abc123
+Content-Type: application/json 

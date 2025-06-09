@@ -200,17 +200,18 @@ public class FilesController : ControllerBase
 [Route("files")]
 public class FilesSearchController : ControllerBase
 {
-    private readonly IFileManagementService _fileManagementService;
+    private readonly HttpClient _httpClient;
     private readonly ILogger<FilesSearchController> _logger;
+    private readonly string _mockServerUrl = "http://localhost:5002";
 
-    public FilesSearchController(IFileManagementService fileManagementService, ILogger<FilesSearchController> logger)
+    public FilesSearchController(HttpClient httpClient, ILogger<FilesSearchController> logger)
     {
-        _fileManagementService = fileManagementService;
+        _httpClient = httpClient;
         _logger = logger;
     }
 
     /// <summary>
-    /// חיפוש קבצים (Search files)
+    /// חיפוש קבצים (Search files) - Forwards request to MockServer
     /// </summary>
     [HttpPost]
     public async Task<ActionResult<FilesSearchResponse>> SearchFiles([FromBody] FilesSearchRequest request, [FromQuery] string? classification = null)
@@ -220,47 +221,43 @@ public class FilesSearchController : ControllerBase
             _logger.LogInformation("Files search request received. Query: {Query}, System: {System}, UUID: {Uuid}, Classification: {Classification}", 
                 request.Q, request.System, request.Uuid, classification);
 
-            // Mock implementation - in real scenario, this would search the file system
-            var response = new FilesSearchResponse
+            // Forward request to MockServer
+            var mockServerEndpoint = $"{_mockServerUrl}/api/files";
+            if (!string.IsNullOrEmpty(classification))
             {
-                Paging = new PagingInfo
-                {
-                    PitId = "aaa=efgrwhfrwf",
-                    Sort = new List<long> { 2658136474, 478034234238 }
-                },
-                Hits = new List<FileHit>
-                {
-                    new FileHit
-                    {
-                        Metadata = new FileMetadata
-                        {
-                            AuthorizationLevel = "FULLY_ATHORIZED",
-                            Extension = "pptx",
-                            UpdateDate = DateTime.Parse("2025-06-03T12:12:13"),
-                            UpdateId = "",
-                            FullNamePath = "/app/im/aaa/bbb/ccc.pptx",
-                            AcExternalId = "",
-                            AcInheriteType = 0,
-                            OwnerId = "0111111",
-                            Type = 1,
-                            FullPath = "/app/im/aaa/bbb/ccc.pptx",
-                            LastOperationDate = DateTime.Parse("2025-06-03T12:12:13.770816"),
-                            ParentId = "222",
-                            LastOperationByUser = "0222222",
-                            ParentName = "Shoki Hahamod",
-                            Size = 277882,
-                            LastOperation = "file_saved",
-                            Name = "fwqded",
-                            Attributes = new List<object>(),
-                            Id = "111",
-                            Status = 1,
-                            CreateDate = DateTime.Parse("2025-06-03T12:12:13")
-                        }
-                    }
-                }
-            };
+                mockServerEndpoint += $"?classification={classification}";
+            }
 
-            return Ok(response);
+            var jsonContent = System.Text.Json.JsonSerializer.Serialize(request);
+            var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+
+            _logger.LogInformation("Forwarding search request to MockServer: {Endpoint}", mockServerEndpoint);
+            
+            var response = await _httpClient.PostAsync(mockServerEndpoint, content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation("Received response from MockServer. Content length: {Length}", responseContent.Length);
+                
+                // Deserialize and return the response from MockServer
+                var searchResponse = System.Text.Json.JsonSerializer.Deserialize<FilesSearchResponse>(responseContent, new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                
+                return Ok(searchResponse);
+            }
+            else
+            {
+                _logger.LogWarning("MockServer returned error status: {StatusCode}", response.StatusCode);
+                return StatusCode((int)response.StatusCode, new { message = "MockServer returned an error" });
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Error communicating with MockServer");
+            return StatusCode(503, new { message = "MockServer is not available" });
         }
         catch (Exception ex)
         {
@@ -403,6 +400,73 @@ public class DeletedItemsController : ControllerBase
             return StatusCode(500, new { message = "שגיאה בשליפת פריטים מחוקים" });
         }
     }
+}
 
+/// <summary>
+/// בקר תצוגות קבצים (File views controller)
+/// </summary>
+[ApiController]
+[Route("api/file")]
+public class FileViewsController : ControllerBase
+{
+    private readonly IFileManagementService _fileManagementService;
+    private readonly ILogger<FileViewsController> _logger;
 
+    public FileViewsController(IFileManagementService fileManagementService, ILogger<FileViewsController> logger)
+    {
+        _fileManagementService = fileManagementService;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// שליפת נתוני תצוגות קובץ (Get file views data)
+    /// </summary>
+    [HttpGet("views/id/{fileId}")]
+    public async Task<ActionResult<FileViewsResponse>> GetFileViews(string fileId)
+    {
+        try
+        {
+            _logger.LogInformation("File views request received for file ID: {FileId}", fileId);
+
+            // For now, return mock data since we don't have a real implementation
+            // In a real implementation, this would query the database for view statistics
+            var response = new FileViewsResponse
+            {
+                ItemId = fileId,
+                Views = new List<FileViewInfo>
+                {
+                    new()
+                    {
+                        UserId = "011111",
+                        ViewCounter = 2,
+                        FirstViewDate = DateTime.UtcNow.AddDays(-30),
+                        LastViewDate = DateTime.UtcNow.AddDays(-1)
+                    },
+                    new()
+                    {
+                        UserId = "022222",
+                        ViewCounter = 3,
+                        FirstViewDate = DateTime.UtcNow.AddDays(-60),
+                        LastViewDate = DateTime.UtcNow.AddDays(-2)
+                    }
+                },
+                ResponseHeader = new ResponseHeader { ReqId = Guid.NewGuid().ToString() },
+                Ex = null
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving file views for file ID: {FileId}", fileId);
+            
+            return Ok(new FileViewsResponse
+            {
+                ItemId = fileId,
+                Views = new List<FileViewInfo>(),
+                ResponseHeader = new ResponseHeader { ReqId = Guid.NewGuid().ToString() },
+                Ex = ex.Message
+            });
+        }
+    }
 } 
